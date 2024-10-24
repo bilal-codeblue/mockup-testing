@@ -1,8 +1,80 @@
 const express = require("express");
 const app = express();
-const bodyParser = require('body-parser')
-app.use(bodyParser.json())
-app.use(express.json())
+const bodyParser = require("body-parser");
+const axios = require('axios')
+app.use(bodyParser.json());
+app.use(express.json());
+
+
+const AIRTABLE_API_KEY = 'patnIFlyamWZtgthM.886ac387e5e38b76b059aa8c468abb0c7e7b3959917c7c993c619ce92c918057';
+
+
+async function fetchRecord(tableId, recordId, AIRTABLE_BASE_ID) {
+  try {
+    const response = await axios.get(
+      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}/${recordId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    // handleError(error);
+    console.log(error)
+
+    throw error;
+  }
+}
+
+// Function to fetch a specific payload using the timestamp
+async function fetchSpecificPayload(baseId, webhookId, timestamp) {
+  try {
+    const response = await axios.get(
+      `https://api.airtable.com/v0/bases/${baseId}/webhooks/${webhookId}/payloads`,
+      {
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+        },
+      }
+    );
+
+    // Convert webhook timestamp to Date for comparison
+    const webhookTime = new Date(timestamp);
+    console.log("Looking for webhook timestamp:", webhookTime.toISOString());
+
+    // Sort payloads by timestamp in descending order (newest first)
+    const sortedPayloads = response.data.payloads.sort((a, b) => {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+
+    // Find the first payload that's within 1 second before the webhook timestamp
+    const matchingPayload = sortedPayloads.find((payload) => {
+      const payloadTime = new Date(payload.timestamp);
+      const timeDiff = webhookTime - payloadTime; // positive if webhook is after payload
+      console.log(
+        `Comparing with payload timestamp: ${payload.timestamp}, diff: ${timeDiff}ms`
+      );
+      return timeDiff >= 0 && timeDiff <= 1000;
+    });
+
+    if (matchingPayload) {
+      console.log(
+        "Found matching payload with timestamp:",
+        matchingPayload.timestamp
+      );
+      return matchingPayload;
+    }
+
+    console.log("No payload found matching webhook timestamp");
+    return null;
+  } catch (error) {
+    // handleError(error);
+    console.log(error)
+    throw error;
+  }
+}
 
 async function processWebhook(req, res) {
   console.log("Webhook received:", req.body);
@@ -10,15 +82,10 @@ async function processWebhook(req, res) {
   const baseId = req.body.base.id;
   const webhookId = req.body.webhook.id;
   const timestamp = req.body.timestamp;
-  const targetFieldId = "fldmYt0TBMFAyj8s3";
+  const targetFieldId = "fldEpaZERjNqdVqIA";
   let baseName;
   let recordDetails;
   try {
-    // Fetch only the specific payload
-    allBases = await fetchAllBases();
-    const base = allBases.find((b) => b.id === baseId);
-    baseName = base ? base.name : "Base not found";
-    console.log("Base Name:", baseName);
     const payload = await fetchSpecificPayload(baseId, webhookId, timestamp);
     if (!payload) {
       console.log("No matching payload found for timestamp:", timestamp);
@@ -31,7 +98,7 @@ async function processWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    const tableChanges = changedTables["tblqKTGneMdj4aoXx"];
+    const tableChanges = changedTables["tblgMDhb1xvmg72ha"];
     if (!tableChanges) {
       console.log("No changes in target table");
       return res.sendStatus(200);
@@ -58,7 +125,7 @@ async function processWebhook(req, res) {
 
       try {
         recordDetails = await fetchRecord(
-          "tblqKTGneMdj4aoXx",
+          "tblgMDhb1xvmg72ha",
           recordId,
           baseId
         );
@@ -75,8 +142,6 @@ async function processWebhook(req, res) {
   console.log("===============Execution Completed=============");
   res.send(recordDetails);
 }
-
-
 
 app.post("/airtable-webhook", processWebhook);
 app.listen(5000, () => {
