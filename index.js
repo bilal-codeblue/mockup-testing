@@ -1,13 +1,12 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const axios = require('axios')
+const axios = require("axios");
 app.use(bodyParser.json());
 app.use(express.json());
 
-
-const AIRTABLE_API_KEY = 'patnIFlyamWZtgthM.886ac387e5e38b76b059aa8c468abb0c7e7b3959917c7c993c619ce92c918057';
-
+const AIRTABLE_API_KEY =
+  "patnIFlyamWZtgthM.886ac387e5e38b76b059aa8c468abb0c7e7b3959917c7c993c619ce92c918057";
 
 async function fetchRecord(tableId, recordId, AIRTABLE_BASE_ID) {
   try {
@@ -22,7 +21,7 @@ async function fetchRecord(tableId, recordId, AIRTABLE_BASE_ID) {
     return response.data;
   } catch (error) {
     // handleError(error);
-    console.log(error)
+    console.log(error);
 
     throw error;
   }
@@ -71,7 +70,7 @@ async function fetchSpecificPayload(baseId, webhookId, timestamp) {
     return null;
   } catch (error) {
     // handleError(error);
-    console.log(error)
+    console.log(error);
     throw error;
   }
 }
@@ -130,6 +129,9 @@ async function processWebhook(req, res) {
           baseId
         );
         console.log("Fetched record details:", recordDetails);
+        const mockupText = recordDetails?.fields?.["Mokcup Text"];
+        console.log("mockupText", mockupText);
+        await runPup(mockupText);
       } catch (error) {
         console.error(`Failed to fetch record ${recordId}:`, error);
       }
@@ -154,71 +156,75 @@ const waitForSeconds = (seconds) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
-const runPup = async () => {
-  const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
+const runPup = async (text) => {
+  try {
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage();
 
-  await page.goto("https://mockup.epiccraftings.com/");
-  await page.setViewport({ width: 1900, height: 1024 });
+    await page.goto("https://mockup.epiccraftings.com/");
+    await page.setViewport({ width: 1900, height: 1024 });
 
-  await page.waitForSelector(".form-control.txt_area_1");
+    await page.waitForSelector(".form-control.txt_area_1");
 
-  await page.evaluate(() => {
-    const textarea = document.querySelector(".form-control.txt_area_1");
-    if (textarea) textarea.value = "";
-  });
-
-  await page.type(".form-control.txt_area_1", "bilal ghauri");
-
-  await page.evaluate(async () => {
-    // Get all divs with the class 'font-div' and filter those with the 'data-path' attribute
-    let fontDivs = Array.from(
-      document.querySelectorAll("div.font-div[data-path]")
-    );
-    fontDivs = fontDivs.slice(1, 8);
-    fontDivs.forEach((div) => div.click());
-  });
-
-  //   await page.evaluate(() => {
-  //     const findSection = document.querySelector('section.bg-white.px-1')
-  //     if(findSection){
-  //         findSection.remove()
-  //     }
-  //   });
-
-  //   await waitForSeconds(2);
-
-  await page.waitForSelector("#takeScreenShoot");
-
-  // Get the bounding box of the div with the ID 'takeScreenShoot'
-  const clip = await page.evaluate(() => {
-    const element = document.querySelector("#takeScreenShoot");
-    if (element) {
-      const { x, y, width, height } = element.getBoundingClientRect();
-      return { x, y, width, height };
-    }
-    return null;
-  });
-
-  if (clip) {
-    await waitForSeconds(2);
-    await page.screenshot({
-      path: "div_screenshot.png",
-      clip,
+    await page.evaluate(() => {
+      const textarea = document.querySelector(".form-control.txt_area_1");
+      if (textarea) textarea.value = "";
     });
 
-    console.log(
-      "Screenshot of #takeScreenShoot saved as 'div_screenshot.png'."
-    );
-  } else {
-    console.error("Element with ID 'takeScreenShoot' not found.");
+    await page.type(".form-control.txt_area_1", text);
+
+    await page.evaluate(async () => {
+      // Get all divs with the class 'font-div' and filter those with the 'data-path' attribute
+      let fontDivs = Array.from(
+        document.querySelectorAll("div.font-div[data-path]")
+      );
+      fontDivs = fontDivs.slice(1, 8);
+      fontDivs.forEach((div) => div.click());
+    });
+
+    //   await page.evaluate(() => {
+    //     const findSection = document.querySelector('section.bg-white.px-1')
+    //     if(findSection){
+    //         findSection.remove()
+    //     }
+    //   });
+
+    //   await waitForSeconds(2);
+
+    await page.waitForSelector("#takeScreenShoot");
+
+    // Get the bounding box of the div with the ID 'takeScreenShoot'
+    const clip = await page.evaluate(() => {
+      const element = document.querySelector("#takeScreenShoot");
+      if (element) {
+        const { x, y, width, height } = element.getBoundingClientRect();
+        return { x, y, width, height };
+      }
+      return null;
+    });
+
+    if (clip) {
+      await waitForSeconds(2);
+      await page.screenshot({
+        path: "div_screenshot.png",
+        clip,
+      });
+
+      console.log(
+        "Screenshot of #takeScreenShoot saved as 'div_screenshot.png'."
+      );
+    } else {
+      console.error("Element with ID 'takeScreenShoot' not found.");
+    }
+
+    //   await page.screenshot({ path: `screenshot_dfdsfs.png`, fullPage: true });
+
+    await waitForSeconds(100);
+
+    await browser.close();
+  } catch (error) {
+    console.log("Puppeteer error", error);
   }
-
-  //   await page.screenshot({ path: `screenshot_dfdsfs.png`, fullPage: true });
-
-  await waitForSeconds(100);
-
-  await browser.close();
 };
 
 // runPup();
