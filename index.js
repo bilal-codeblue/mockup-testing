@@ -2,8 +2,14 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const axios = require("axios");
+const path = require("path");
+const fs = require("fs");
+const { PDFDocument } = require("pdf-lib");
+
 app.use(bodyParser.json());
 app.use(express.json());
+
+app.use(express.static("./public"));
 
 const AIRTABLE_API_KEY =
   "patnIFlyamWZtgthM.886ac387e5e38b76b059aa8c468abb0c7e7b3959917c7c993c619ce92c918057";
@@ -171,7 +177,7 @@ const runPup = async (text) => {
       if (textarea) textarea.value = "";
     });
 
-    await page.type(".form-control.txt_area_1", text);
+    await page.type(".form-control.txt_area_1", "Bilal Ghauriiii");
 
     await page.evaluate(async () => {
       // Get all divs with the class 'font-div' and filter those with the 'data-path' attribute
@@ -181,16 +187,6 @@ const runPup = async (text) => {
       fontDivs = fontDivs.slice(1, 8);
       fontDivs.forEach((div) => div.click());
     });
-
-    //   await page.evaluate(() => {
-    //     const findSection = document.querySelector('section.bg-white.px-1')
-    //     if(findSection){
-    //         findSection.remove()
-    //     }
-    //   });
-
-    //   await waitForSeconds(2);
-
     await page.waitForSelector("#takeScreenShoot");
 
     // Get the bounding box of the div with the ID 'takeScreenShoot'
@@ -203,28 +199,80 @@ const runPup = async (text) => {
       return null;
     });
 
+    function generateUniqueId() {
+      return "id-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+    }
+
+    const screenShotName = `screenshot${generateUniqueId()}`;
+    const screenshot_image_name = `${screenShotName}.png`;
+    const screenshotPath = path.join(
+      __dirname,
+      "public",
+      "screenshots",
+      screenshot_image_name
+    );
+
     if (clip) {
       await waitForSeconds(2);
       await page.screenshot({
-        path: "div_screenshot.png",
+        path: screenshotPath,
         clip,
       });
 
-      console.log(
-        "Screenshot of #takeScreenShoot saved as 'div_screenshot.png'."
-      );
+      console.log("Screenshot of #takeScreenShoot saved as 'screenshot.png'.");
     } else {
       console.error("Element with ID 'takeScreenShoot' not found.");
     }
 
     //   await page.screenshot({ path: `screenshot_dfdsfs.png`, fullPage: true });
 
-    await waitForSeconds(100);
+    // await waitForSeconds(100);
 
     await browser.close();
+
+    const pdfPath = path.join(__dirname, "public", "sample", "sample.pdf");
+    const existingPdfBytes = fs.readFileSync(pdfPath);
+
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+    // Embed the screenshot as an image
+    const imgBytes = fs.readFileSync(screenshotPath);
+    const img = await pdfDoc.embedPng(imgBytes);
+
+    // Get the dimensions of the second page
+    const pages = pdfDoc.getPages();
+    const pageToReplace = pages[1]; // Index 1 corresponds to the second page
+    const { width: pageWidth, height: pageHeight } = pageToReplace.getSize();
+
+    // Calculate the scaled height to maintain aspect ratio of the image
+    const imgDims = img.scale(pageWidth / img.width);
+
+    // Draw the image on the second page, clearing the existing content
+    pageToReplace.drawImage(img, {
+      x: 0,
+      y: pageHeight - imgDims.height, // Align the image to the top of the page
+      width: pageWidth,
+      height: imgDims.height,
+    });
+
+    // Serialize the updated PDF document to bytes
+    const pdfBytes = await pdfDoc.save();
+
+    // Write the new PDF file to disk
+    const updatedPdfPath = path.join(
+      __dirname,
+      "public",
+      "uploads",
+      `${screenShotName}.pdf`
+    );
+    fs.writeFileSync(updatedPdfPath, pdfBytes);
+    console.log(
+      `Updated PDF created with the screenshot replacing page 2 at: ${updatedPdfPath}`
+    );
   } catch (error) {
     console.log("Puppeteer error", error);
   }
 };
 
-// runPup();
+runPup();
