@@ -186,11 +186,14 @@ const runPup = async (text) => {
 
     await page.waitForSelector(".form-control.txt_area_1");
 
+    console.log('selector found 1')
+
     await page.evaluate(() => {
       const textarea = document.querySelector(".form-control.txt_area_1");
       if (textarea) textarea.value = "";
     });
 
+    console.log('selector found 2')
     await page.type(".form-control.txt_area_1", "Bilal Ghauriiii");
 
     await page.evaluate(async () => {
@@ -201,7 +204,10 @@ const runPup = async (text) => {
       fontDivs = fontDivs.slice(1, 8);
       fontDivs.forEach((div) => div.click());
     });
+    console.log('selector found 3')
     await page.waitForSelector("#takeScreenShoot");
+
+    console.log('selector found 4')
 
     // Get the bounding box of the div with the ID 'takeScreenShoot'
     const clip = await page.evaluate(() => {
@@ -213,9 +219,13 @@ const runPup = async (text) => {
       return null;
     });
 
+    console.log('selector found 5')
+
     function generateUniqueId() {
       return "id-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
     }
+
+    console.log('selector found 6')
 
     const screenShotName = `screenshot${generateUniqueId()}`;
     const screenshot_image_name = `${screenShotName}.png`;
@@ -226,6 +236,7 @@ const runPup = async (text) => {
       screenshot_image_name
     );
 
+    console.log('selector found 7')
     if (clip) {
       await waitForSeconds(2);
       await page.screenshot({
@@ -238,6 +249,7 @@ const runPup = async (text) => {
       console.error("Element with ID 'takeScreenShoot' not found.");
     }
 
+    console.log('selector found 8')
     //   await page.screenshot({ path: `screenshot_dfdsfs.png`, fullPage: true });
 
     // await waitForSeconds(100);
@@ -273,6 +285,8 @@ const runPup = async (text) => {
     // Serialize the updated PDF document to bytes
     const pdfBytes = await pdfDoc.save();
 
+    console.log('pdf is also save in memory')
+
     // Write the new PDF file to disk
     const updatedPdfPath = path.join(
       __dirname,
@@ -280,6 +294,9 @@ const runPup = async (text) => {
       "uploads",
       `${screenShotName}.pdf`
     );
+
+    console.log('pdf is also save in memory 2')
+
     fs.writeFileSync(updatedPdfPath, pdfBytes);
     console.log(
       `Updated PDF created with the screenshot replacing page 2 at: ${updatedPdfPath}`
