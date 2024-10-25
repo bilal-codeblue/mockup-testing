@@ -157,7 +157,8 @@ async function processWebhook(req, res) {
 app.post("/airtable-webhook", processWebhook);
 
 app.get('/new-req' ,async (req ,res) => {
-  await runPup("Someone name")
+  const data =  await runPup("Someone name");
+  return res.status(400).json({msg : "api successfully called"})
 })
 
 
