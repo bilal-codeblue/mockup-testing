@@ -140,7 +140,7 @@ async function processWebhook(req, res) {
         console.log("Fetched record details:", recordDetails);
         const mockupText = recordDetails?.fields?.["Mokcup Text"];
         console.log("mockupText", mockupText);
-        // await runPup(mockupText);
+        await runPup(mockupText);
       } catch (error) {
         console.error(`Failed to fetch record ${recordId}:`, error);
       }
@@ -289,4 +289,4 @@ const runPup = async (text) => {
   }
 };
 
-runPup();
+// runPup();
