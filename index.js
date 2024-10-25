@@ -155,6 +155,13 @@ async function processWebhook(req, res) {
 }
 
 app.post("/airtable-webhook", processWebhook);
+
+app.get('/new-req' ,async (req ,res) => {
+  await runPup("Someone name")
+})
+
+
+
 app.listen(5000, () => {
   console.log("App is running");
 });
