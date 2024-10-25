@@ -140,7 +140,7 @@ async function processWebhook(req, res) {
         console.log("Fetched record details:", recordDetails);
         const mockupText = recordDetails?.fields?.["Mokcup Text"];
         console.log("mockupText", mockupText);
-        await runPup(mockupText);
+        // await runPup(mockupText);
       } catch (error) {
         console.error(`Failed to fetch record ${recordId}:`, error);
       }
@@ -173,7 +173,7 @@ const runPup = async (text) => {
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
