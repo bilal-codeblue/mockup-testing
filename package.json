@@ -10,11 +10,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@sparticuz/chromium": "^130.0.0",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
     "express": "^4.21.1",
     "nodemon": "^3.1.7",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.6.0"
+    "puppeteer": "^23.6.0",
+    "puppeteer-core": "^23.6.0"
   }
 }

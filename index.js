@@ -6,6 +6,9 @@ const path = require("path");
 const fs = require("fs");
 const { PDFDocument } = require("pdf-lib");
 
+const chromium = require("@sparticuz/chromium");
+const puppeteer = require("puppeteer-core");
+
 app.use(bodyParser.json());
 app.use(express.json());
 
@@ -156,15 +159,26 @@ app.listen(5000, () => {
   console.log("App is running");
 });
 
-const puppeteer = require("puppeteer");
-
 const waitForSeconds = (seconds) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
 const runPup = async (text) => {
   try {
-    const browser = await puppeteer.launch({ headless: false });
+
+    const executablePath = await chromium.executablePath();
+    console.log("Chromium executable path:", executablePath);
+
+
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+
+    console.log('browser launched')
     const page = await browser.newPage();
 
     await page.goto("https://mockup.epiccraftings.com/");
